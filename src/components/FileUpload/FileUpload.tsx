@@ -5,7 +5,7 @@ import { Input } from '../ui/input'
 import { Button } from '../ui/button'
 import { cn } from '@/lib/utils'
 import { useState, useRef, ReactNode } from 'react'
-import { DroneIcon } from 'lucide-react'
+import { DroneIcon, UploadCloudIcon } from 'lucide-react'
 import axios from 'axios'
 import {
   Tooltip,
@@ -13,6 +13,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Progress } from '../ui/progress'
+import { toast } from 'sonner'
 
 interface FileUploadProps {
   /** Show progress bar under each file */
@@ -36,9 +37,10 @@ interface FileUploadProps {
   tooltip?: string;
   /** Allow multiple file selection */
   multiple?: boolean;
+  url: string;
 }
 
-const FileUpload = ({progress=true, onUpload,onSuccess,onError, tooltip, label}:FileUploadProps) => {
+const FileUpload = ({progress=true, onUpload,onSuccess,onError, tooltip, label, url}:FileUploadProps) => {
      const [dragActive, setDragActive] = useState(false)
   const [selectedFiles, setSelectedFiles] = useState<File[] | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -88,13 +90,11 @@ const acceptedFileTypes = ["image/jpeg",
     }
   }}
 const genericUpload = async (file: File) => {
- // if (!selectedFiles || selectedFiles.length === 0) return;
-  const formData = new FormData();
-  // selectedFiles.forEach((file, idx) => {
+  try{
+     const formData = new FormData();
     formData.append("file", file);
-  // });
 
-  const res = await axios.post("/api/upload", formData, {
+  const res = await axios.post(url, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
@@ -106,62 +106,72 @@ const genericUpload = async (file: File) => {
         ...prev,
         [file.name]: percent,
       }));
-      // setUploadProgress(percent);
-      // console.log(`Upload progress: ${percent}%`);
     },
   });
 
   console.log("Sending file:", selectedFiles);
-  const result = res.data;
-  if (res.status === 200) {
-    console.log("✅ Success:", result);
-    // alert("File uploaded successfully");
-    selectedFiles.forEach(file => {
-      onSuccess?.(file, result.message);
-    });
-  } else {
-    onError?.({ file, error: result.error });
-    console.error("❌ Upload error:", result.error);
-    alert("Upload failed");
+  
+  if (res.status !== 200) {
+    throw new Error(`Upload failed with status ${res.status}: ${res.data}`);
   }
+  const result = res.data;
+  return result
+  }catch(err){
+    throw new Error(`Upload failed for ${file.name}: ${err}`);
+  }
+ 
 }
-  const handleUpload = async () => {
-    console.log("Upload button clicked")
-    if (!selectedFiles || selectedFiles.length === 0) {
-      console.log("No file selected")
-      return
-    }
+  const handleUpload = async () => {   
     try {
+ if (!url) {
+     throw new Error("Upload URL is required");
+    }
+    if (!selectedFiles || selectedFiles.length === 0) {
+      throw new Error("No files selected for upload");
+    }
       if (onUpload){
-        await onUpload?.(selectedFiles, setUploadProgressMap)
+        await Promise.all(
+          selectedFiles.map(file =>
+            onUpload?.([file], (percent: number) => {
+              setUploadProgressMap(prev => ({
+                ...prev,
+                [file.name]: percent,
+              }));
+            })
+          )
+        );
       }
-   else{
-   const uploadPromises = selectedFiles.map(async (file) => {
+   else{const uploadPromises = selectedFiles.map(async (file) => {
     try {
      const res= await genericUpload(file);
       onSuccess?.(file, res);
     } catch (err) {
+
       onError?.({file, error: err});
     }
   });
 
   await Promise.all(uploadPromises);
    }
+  
+      
      setSelectedFiles(null) // Clear the selected file after upload
       setUploadProgressMap(null) // Reset progress
     } catch (err) {
-      onError?.({error: err});
-      console.error("❌ Network error:", err)
+      onError?.({error: err})
+      toast("❌ Network error:", err);
+    
     }
   
   }
   return (
-<Card>
+<Card className='max-w-md mx-auto my-10 w-5xl'>
     <CardHeader>
         <CardTitle>Upload File Here</CardTitle>
     </CardHeader>
-    <CardContent className='flex flex-col items-center m-5 space-y-4 border border-gray-200 border-dashed rounded-md p-6'>
-       <TooltipComponent  text="Drag & drop your file here or click to select" >
+    <CardContent className='flex flex-col items-center m-5 space-y-4 hover:bg-gray-100 border border-gray-200 border-dashed rounded-md p-6'>
+       <TooltipComponent 
+        text="Drag & drop your file here or click to select" >
         <div
          role="button"
   tabIndex={0}
@@ -176,13 +186,13 @@ const genericUpload = async (file: File) => {
           onDragLeave={handleDrag}
           onDrop={handleDrop}
           className={cn(
-            " text-center transition-all cursor-pointer",
+            " text-center transition-all cursor-pointer ",
             dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
           )}
           onClick={() => inputRef.current?.click()}
         > 
   
-          <DroneIcon className="mx-auto mb-2 h-8 w-8 text-gray-500" />
+          <UploadCloudIcon className="mx-auto mb-2 h-16 w-16 text-gray-500" />
   
           <p className="text-gray-500">
             {dragActive ? "Drop the file here..." : "Drag & drop a file here or click to browse"} </p>
@@ -209,7 +219,7 @@ multiple
               : <p>No file selected</p>}
           </div>
  
-            <CardAction className="flex flex-col items-center mt-4 space-y-2">
+            <CardAction className="flex self-center items-center justify-center mt-4 space-y-2">
 
  
        <TooltipComponent text="upload Selected file">

@@ -130,3 +130,98 @@ Docs.md: explain all props, events, example usage.
  Documentation: complete prop table and usage examples in MD.
 
 Implementing these will turn your component into a polished, composable piece that aligns with shadcn/ui’s standards and is ready for a community pull request.
+
+
+
+const[selectedFile, setSelectedFile] = React.useState<File | null>(null);
+const file = useRef<HTMLInputElement>(null);
+const [isActiveDrag, setIsActiveDrag] = React.useState(false);
+
+const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
+  e.preventDefault();
+  e.stopPropagation();
+  if (e.type === "dragenter" || e.type === "dragover") {
+    setIsActiveDrag(true);
+  } else if (e.type === "dragleave") {
+    setIsActiveDrag(false);
+  }
+}
+const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  e.preventDefault();
+  e.stopPropagation();
+  setIsActiveDrag(false);
+  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    setSelectedFile(e.dataTransfer.files[0]);
+  } else {
+    setSelectedFile(null);
+  }
+}
+const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  if (e.target.files && e.target.files.length > 0) {
+    setSelectedFile(e.target.files[0]);
+  } else {
+    setSelectedFile(null);
+  }
+}
+const handleUpload = async () => {
+  if (!selectedFile) {
+    alert("Please select a file first");
+    return;
+  }
+  const formData = new FormData();
+  formData.append("file", selectedFile);
+  try {
+    const response = await axios.post("/api/upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    console.log("File uploaded successfully:", response.data);
+   if(response.status === 200){
+alert("File uploaded successfully");
+   } 
+    setSelectedFile(null); // Clear the selected file after upload
+    file.current.value = ''
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    alert("Error uploading file");
+  }}
+  return (
+  <Card >
+    <CardHeader>
+      <CardTitle>File Upload</CardTitle>
+    </CardHeader>
+    <CardContent>
+    <div
+ onDragEnter={handleDrag}
+ onDragLeave={handleDrag}
+ onDragOver={handleDrag}
+ onDrop={handleDrop}
+ onClick={()=>file.current?.click()}
+
+     className='flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg mb-4 w-60'>
+      <UploadCloudIcon/>
+     { isActiveDrag ? (
+        <p className="text-gray-500">Drop your file here</p>):
+        <p className="text-gray-500">Drag and drop a file here or click to select</p>
+        }
+    </div>
+      <Input 
+      className='hidden'
+      onChange={handleChange}
+      ref={file}
+      type="file" />
+      {selectedFile ? (
+        <div className="mt-4">
+          <p className="text-gray-700">Selected file: {selectedFile.name}</p>
+        </div>
+      ): (
+        <p className="text-gray-500">No file selected</p> )}
+      <Button 
+     onClick={handleUpload}
+      className="mt-4" variant="default">
+        Upload</Button>
+    </CardContent>
+
+  </Card>
+  )
