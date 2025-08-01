@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/tooltip"
 import { Progress } from '../ui/progress'
 import { toast } from 'sonner'
+import useDragAndDrop from '@/app/hooks/useDragAndDrop'
 
 interface FileUploadProps {
   /** Show progress bar under each file */
@@ -41,7 +42,7 @@ interface FileUploadProps {
 }
 
 const FileUpload = ({progress=true, onUpload,onSuccess,onError, tooltip, label, url}:FileUploadProps) => {
-     const [dragActive, setDragActive] = useState(false)
+    
   const [selectedFiles, setSelectedFiles] = useState<File[] | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploadProgressMap, setUploadProgressMap] = useState<Record<string, number>>({})
@@ -50,26 +51,7 @@ const acceptedFileTypes = ["image/jpeg",
   "image/png",
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ]// for .docx
-  const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true)
-    } else if (e.type === "dragleave") {
-      setDragActive(false)
-    }
-  }
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0]
-      setSelectedFiles([...selectedFiles || [], file])
-    }
-  }
-
+const { dragActive, handleDrag, handleDrop } = useDragAndDrop({ selectedFiles, setSelectedFiles })
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
    const files = e.target.files
    if (!files && files.length === 0)return
