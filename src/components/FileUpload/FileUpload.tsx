@@ -15,6 +15,7 @@ import {
 import { Progress } from '../ui/progress'
 import { toast } from 'sonner'
 import useDragAndDrop from '@/app/hooks/useDragAndDrop'
+import { on } from 'events'
 
 interface FileUploadProps {
   /** Show progress bar under each file */
@@ -43,25 +44,39 @@ interface FileUploadProps {
 
 const FileUpload = ({progress=true, onUpload,onSuccess,onError, tooltip, label, url}:FileUploadProps) => {
     
-  const [selectedFiles, setSelectedFiles] = useState<File[] | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploadProgressMap, setUploadProgressMap] = useState<Record<string, number>>({})
+ const onSelectFile = (selectedFiles: File[]) => {
+  console.log("Files selected:", selectedFiles)
+  if (onUpload) {
+    onUpload(selectedFiles, (percent: number) => {
+      setUploadProgressMap(prev => ({
+        ...prev,
+        [selectedFiles[0].name]: percent,
+      }));
+    });
+  }}
+ 
+  const {files, dragActive, handleDrag, handleDrop , clear} = useDragAndDrop({onSelectFile: onSelectFile})
 
 const acceptedFileTypes = ["image/jpeg",
   "image/png",
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ]// for .docx
-const { dragActive, handleDrag, handleDrop } = useDragAndDrop({ selectedFiles, setSelectedFiles })
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+ 
+
+const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
    const files = e.target.files
    if (!files && files.length === 0)return
 
     const fileArray = Array.from(files)
-    setSelectedFiles(fileArray)
+   // setSelectedFiles(fileArray)
+  onSelectFile?.(fileArray)
     console.log("Files selected:", fileArray)
     if (inputRef.current) {
       inputRef.current.value = "" // Clear the input after selection
     }
+    //check file types
   for (let file of fileArray) {
     const fileType = file.type
     const isValidType = acceptedFileTypes?.some((type)=> fileType.includes(type))
@@ -71,7 +86,8 @@ const { dragActive, handleDrag, handleDrop } = useDragAndDrop({ selectedFiles, s
       continue;
     }
   }}
-const genericUpload = async (file: File) => {
+
+  const genericUpload = async (file: File) => {
   try{
      const formData = new FormData();
     formData.append("file", file);
@@ -91,7 +107,7 @@ const genericUpload = async (file: File) => {
     },
   });
 
-  console.log("Sending file:", selectedFiles);
+  console.log("Sending file:", files);
   
   if (res.status !== 200) {
     throw new Error(`Upload failed with status ${res.status}: ${res.data}`);
@@ -108,12 +124,12 @@ const genericUpload = async (file: File) => {
  if (!url) {
      throw new Error("Upload URL is required");
     }
-    if (!selectedFiles || selectedFiles.length === 0) {
+    if (!files || files.length === 0) {
       throw new Error("No files selected for upload");
     }
       if (onUpload){
         await Promise.all(
-          selectedFiles.map(file =>
+          files.map(file =>
             onUpload?.([file], (percent: number) => {
               setUploadProgressMap(prev => ({
                 ...prev,
@@ -123,7 +139,7 @@ const genericUpload = async (file: File) => {
           )
         );
       }
-   else{const uploadPromises = selectedFiles.map(async (file) => {
+   else{const uploadPromises = files.map(async (file) => {
     try {
      const res= await genericUpload(file);
       onSuccess?.(file, res);
@@ -137,7 +153,8 @@ const genericUpload = async (file: File) => {
    }
   
       
-     setSelectedFiles(null) // Clear the selected file after upload
+    // setSelectedFiles(null) // Clear the selected file after upload
+    clear() // Clear the internal files state
       setUploadProgressMap(null) // Reset progress
     } catch (err) {
       onError?.({error: err})
@@ -187,9 +204,9 @@ multiple
             accept={acceptedFileTypes?.join(", ")|| ""}
         className="border border-gray-300 rounded-md p-2 w-full hidden"/> 
         <div className="text-gray-500">
-            {selectedFiles && selectedFiles.length > 0
+            {files && files.length > 0
               ?(<>
-            { selectedFiles.map((file,i)=>(<>
+            { files.map((file,i)=>(<>
             <p key={i}>{file.name}</p>
               {progress && (
               <div className="mt-4">
@@ -206,7 +223,7 @@ multiple
  
        <TooltipComponent text="upload Selected file">
 <Button
-disabled={!selectedFiles || selectedFiles.length === 0}
+disabled={!files || files.length === 0}
       aria-label="Upload file"
   onKeyDown={(e) => {
     if (e.key === "Enter" || e.key === " ") {
