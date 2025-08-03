@@ -45,8 +45,15 @@ interface FileUploadProps {
 const FileUpload = ({progress=true, onUpload,onSuccess,onError, tooltip, label, url}:FileUploadProps) => {
     
   const inputRef = useRef<HTMLInputElement>(null)
-  const [uploadProgressMap, setUploadProgressMap] = useState<Record<string, number>>({})
- const onSelectFile = (selectedFiles: File[]) => {
+  const [uploadProgressMap, setUploadProgressMap] = useState<{}>({})
+const acceptedFileTypes = ["image/jpeg",
+  "image/png",
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ]// for .docx
+ 
+
+
+  const onSelectFile = (selectedFiles: File[]) => {
   console.log("Files selected:", selectedFiles)
   if (onUpload) {
     onUpload(selectedFiles, (percent: number) => {
@@ -57,35 +64,7 @@ const FileUpload = ({progress=true, onUpload,onSuccess,onError, tooltip, label, 
     });
   }}
  
-  const {files, dragActive, handleDrag, handleDrop , clear} = useDragAndDrop({onSelectFile: onSelectFile})
-
-const acceptedFileTypes = ["image/jpeg",
-  "image/png",
-  "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ]// for .docx
- 
-
-const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-   const files = e.target.files
-   if (!files && files.length === 0)return
-
-    const fileArray = Array.from(files)
-   // setSelectedFiles(fileArray)
-  onSelectFile?.(fileArray)
-    console.log("Files selected:", fileArray)
-    if (inputRef.current) {
-      inputRef.current.value = "" // Clear the input after selection
-    }
-    //check file types
-  for (let file of fileArray) {
-    const fileType = file.type
-    const isValidType = acceptedFileTypes?.some((type)=> fileType.includes(type))
-    if (!isValidType){
-      console.error(`Invalid file type: ${fileType}`)
-      alert(`Invalid file type: ${fileType}`)
-      continue;
-    }
-  }}
+  const {files, dragActive, handleDrag, handleDrop , clear, handleFileChange} = useDragAndDrop({onSelectFile: onSelectFile})
 
   const genericUpload = async (file: File) => {
   try{
@@ -151,10 +130,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
   await Promise.all(uploadPromises);
    }
-  
-      
-    // setSelectedFiles(null) // Clear the selected file after upload
-    clear() // Clear the internal files state
+      clear() // Clear the internal files state
       setUploadProgressMap(null) // Reset progress
     } catch (err) {
       onError?.({error: err})
