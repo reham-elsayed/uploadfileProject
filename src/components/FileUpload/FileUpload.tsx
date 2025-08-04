@@ -16,10 +16,13 @@ import { Progress } from '../ui/progress'
 import { toast } from 'sonner'
 import useDragAndDrop from '@/app/hooks/useDragAndDrop'
 import { on } from 'events'
+import { dropzoneVariants, fileUploadVariants, FileUploadVariants } from '../ui/file-upload'
 
-interface FileUploadProps {
+interface FileUploadProps extends FileUploadVariants {
   /** Optional children to render inside the component */
    children?: ReactNode
+  /** Additional CSS classes */
+   className?: string;
   /** Show progress bar under each file */
   progress?: boolean;
   /** MIME types or file extensions to accept */
@@ -45,9 +48,11 @@ interface FileUploadProps {
   url: string;
   /** Show upload button */
   showUploadButton?: boolean;
+  size?: "sm" | "md" | "lg";
+  variant?: "default" | "ghost" | "muted" | "dark" | "success" | "danger";
 }
 
-const FileUpload = ({progress=true, onUpload,onSuccess,onError, tooltip, label, url, showUploadButton=true, children}:FileUploadProps) => {
+const FileUpload = ({progress=true,className, size, variant, onUpload,onSuccess,onError, tooltip, label, url, showUploadButton=true, children}:FileUploadProps) => {
     
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploadProgressMap, setUploadProgressMap] = useState<{}>({})
@@ -145,7 +150,7 @@ const acceptedFileTypes = ["image/jpeg",
     }
   }
   return (
-<Card className='max-w-md mx-auto my-10 w-5xl'>
+<Card className={cn(fileUploadVariants({variant, size}), className)}>
     <CardHeader>
        {label && (
   <div className="text-lg font-semibold mb-4 text-center">
@@ -169,10 +174,7 @@ const acceptedFileTypes = ["image/jpeg",
           onDragOver={handleDrag}
           onDragLeave={handleDrag}
           onDrop={handleDrop}
-          className={cn(
-            " text-center transition-all cursor-pointer ",
-            dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
-          )}
+          className={cn(dropzoneVariants({dragActive: dragActive}))}
           onClick={() => inputRef.current?.click()}
         > 
   
