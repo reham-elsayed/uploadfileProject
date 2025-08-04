@@ -18,6 +18,8 @@ import useDragAndDrop from '@/app/hooks/useDragAndDrop'
 import { on } from 'events'
 
 interface FileUploadProps {
+  /** Optional children to render inside the component */
+   children?: ReactNode
   /** Show progress bar under each file */
   progress?: boolean;
   /** MIME types or file extensions to accept */
@@ -39,10 +41,13 @@ interface FileUploadProps {
   tooltip?: string;
   /** Allow multiple file selection */
   multiple?: boolean;
+  /** URL to upload files to */
   url: string;
+  /** Show upload button */
+  showUploadButton?: boolean;
 }
 
-const FileUpload = ({progress=true, onUpload,onSuccess,onError, tooltip, label, url}:FileUploadProps) => {
+const FileUpload = ({progress=true, onUpload,onSuccess,onError, tooltip, label, url, showUploadButton=true, children}:FileUploadProps) => {
     
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploadProgressMap, setUploadProgressMap] = useState<{}>({})
@@ -130,19 +135,23 @@ const acceptedFileTypes = ["image/jpeg",
 
   await Promise.all(uploadPromises);
    }
+   await new Promise((resolve) => setTimeout(resolve, 500)); // 👈 add this
+
       clear() // Clear the internal files state
-      setUploadProgressMap(null) // Reset progress
+      setUploadProgressMap({}) // Reset progress
     } catch (err) {
       onError?.({error: err})
       toast("❌ Network error:", err);
-    
     }
-  
   }
   return (
 <Card className='max-w-md mx-auto my-10 w-5xl'>
     <CardHeader>
-        <CardTitle>Upload File Here</CardTitle>
+       {label && (
+  <div className="text-lg font-semibold mb-4 text-center">
+    {label}
+  </div>
+)}
     </CardHeader>
     <CardContent className='flex flex-col items-center m-5 space-y-4 hover:bg-gray-100 border border-gray-200 border-dashed rounded-md p-6'>
        <TooltipComponent 
@@ -173,22 +182,28 @@ const acceptedFileTypes = ["image/jpeg",
             {dragActive ? "Drop the file here..." : "Drag & drop a file here or click to browse"} </p>
         </div>
      </TooltipComponent>
-<Input  type="file"
+<Input 
+ type="file"
 ref={inputRef}
 multiple
  onChange={handleFileChange}
-            accept={acceptedFileTypes?.join(", ")|| ""}
-        className="border border-gray-300 rounded-md p-2 w-full hidden"/> 
+accept={acceptedFileTypes?.join(", ")|| ""}
+className="border border-gray-300 rounded-md p-2 w-full hidden"/> 
+ {children && (
+    <div className="mt-2 text-sm text-muted-foreground">
+      {children}
+    </div>
+  )}
         <div className="text-gray-500">
             {files && files.length > 0
               ?(<>
-            { files.map((file,i)=>(<>
-            <p key={i}>{file.name}</p>
+            { files?.map((file,i)=>(<div key={i}>
+            <p >{file.name}</p>
               {progress && (
-              <div className="mt-4">
+              <div  role="status" aria-live="polite"  className="mt-4">
                 <Progress value={uploadProgressMap[file.name] || 0}/>
               </div>)}
-            </> 
+            </div> 
             ))}    
              </>)
               : <p>No file selected</p>}
@@ -198,21 +213,17 @@ multiple
 
  
        <TooltipComponent text="upload Selected file">
-<Button
+{showUploadButton && (<Button
 disabled={!files || files.length === 0}
       aria-label="Upload file"
-  onKeyDown={(e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      inputRef.current?.click()
-    }
-  }}
+  
   onClick={async () => {
     handleUpload()
    }}
   className="mt-4 cursor-pointer bg-blue-500 text-white hover:bg-blue-600"
 >
   Upload File
-</Button>
+</Button>)}
 </TooltipComponent>
             </CardAction>
           

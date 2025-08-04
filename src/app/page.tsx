@@ -13,13 +13,18 @@ import { toast } from "sonner";
 export default function Home() {
   const successHandler = (file: File, response: any) => {
     toast.success(`File ${file.name} uploaded successfully!`);}
+
     const errorHandler = (args: { file?: File; error: unknown }) => {
       const fileName = args.file ? args.file.name : "Unknown file";
       toast.error(`Error uploading ${fileName}: ${args.error}`);
     };
   return (
   <div className="flex flex-col items-center justify-center min-h-screen p-4">
-  <FileUpload onError={errorHandler} progress={false} onSuccess={successHandler} url='api/upload'/>
+  <FileUpload onError={errorHandler} progress={true} onSuccess={successHandler} url='api/upload'>
+  <p className="text-xs text-muted-foreground">
+    Allowed file types: PNG, JPG, PDF, DOCX.
+  </p>
+</FileUpload>
  {/* <FileUploadYoutube/> */}
 
   </div>

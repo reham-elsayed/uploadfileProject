@@ -1,4 +1,5 @@
 import React, {  useCallback, useState } from 'react'
+import { toast } from 'sonner';
 type useDragAndDropProps = {
   selectedFiles?: File[] | null;
   setSelectedFiles?: (files: File[]| null)=>void;
@@ -31,7 +32,7 @@ const acceptedFileTypes = ["image/jpeg",
     const isValidType = acceptedFileTypes?.some((type)=> fileType.includes(type))
     if (!isValidType){
       console.error(`Invalid file type: ${fileType}`)
-      alert(`Invalid file type: ${fileType}`)
+     toast.error(`Invalid file type: ${fileType}`)
      return
     }
   }
@@ -62,10 +63,10 @@ const handleDrop = useCallback(
 
   
 const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-   const files = e.target.files
-   if (!files || files.length === 0)return
+   const filesInput = e.target.files
+   if (!filesInput || filesInput.length === 0)return
 
-    const fileArray = Array.from(files)
+    const fileArray = Array.from(filesInput)
     verifyandSetFiles(fileArray);
 
     //check file types
