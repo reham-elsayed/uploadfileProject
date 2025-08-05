@@ -1,7 +1,7 @@
 'use client';
 
 import FileUploadYoutube from "@/components/FileUpload-1/FileUpload";
-import FileUpload from "@/components/FileUpload/FileUpload";
+import {FileUpload} from "@/components/FileUpload/FileUpload";
 import { Card } from "@/components/ui/card";
 import React from "react";
 import { toast } from "sonner";

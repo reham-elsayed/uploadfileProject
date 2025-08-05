@@ -5,7 +5,7 @@ import { Input } from '../ui/input'
 import { Button } from '../ui/button'
 import { cn } from '@/lib/utils'
 import { useState, useRef, ReactNode } from 'react'
-import { DroneIcon, UploadCloudIcon } from 'lucide-react'
+import { DroneIcon, Loader2, UploadCloudIcon } from 'lucide-react'
 import axios from 'axios'
 import {
   Tooltip,
@@ -17,6 +17,7 @@ import { toast } from 'sonner'
 import useDragAndDrop from '@/app/hooks/useDragAndDrop'
 import { on } from 'events'
 import { dropzoneVariants, fileUploadVariants, FileUploadVariants } from '../ui/file-upload'
+import { TooltipWrapper } from '../ui/tooltip-wrapper'
 
 interface FileUploadProps extends FileUploadVariants {
   /** Optional children to render inside the component */
@@ -48,14 +49,17 @@ interface FileUploadProps extends FileUploadVariants {
   url: string;
   /** Show upload button */
   showUploadButton?: boolean;
+  /** Size of the file upload component */
   size?: "sm" | "md" | "lg";
+  /** Variant of the file upload component */
   variant?: "default" | "ghost" | "muted" | "dark" | "success" | "danger";
 }
 
-const FileUpload = ({progress=true,className, size, variant, onUpload,onSuccess,onError, tooltip, label, url, showUploadButton=true, children}:FileUploadProps) => {
+export function FileUpload({progress=true,className, size, variant, onUpload,onSuccess,onError, tooltip, label, url, showUploadButton=true, children}:FileUploadProps)  {
     
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploadProgressMap, setUploadProgressMap] = useState<{}>({})
+  const [isLoading, setIsLoading] = useState(false)
 const acceptedFileTypes = ["image/jpeg",
   "image/png",
   "application/pdf",
@@ -108,7 +112,8 @@ const acceptedFileTypes = ["image/jpeg",
   }
  
 }
-  const handleUpload = async () => {   
+  const handleUpload = async () => {  
+    setIsLoading(true); 
     try {
  if (!url) {
      throw new Error("Upload URL is required");
@@ -146,7 +151,9 @@ const acceptedFileTypes = ["image/jpeg",
       setUploadProgressMap({}) // Reset progress
     } catch (err) {
       onError?.({error: err})
-      toast("❌ Network error:", err);
+      toast.error("❌ Network error:", err);
+    }finally{
+      setIsLoading(false);
     }
   }
   return (
@@ -159,7 +166,7 @@ const acceptedFileTypes = ["image/jpeg",
 )}
     </CardHeader>
     <CardContent className='flex flex-col items-center m-5 space-y-4 hover:bg-gray-100 border border-gray-200 border-dashed rounded-md p-6'>
-       <TooltipComponent 
+       <TooltipWrapper
         text="Drag & drop your file here or click to select" >
         <div
          role="button"
@@ -183,7 +190,7 @@ const acceptedFileTypes = ["image/jpeg",
           <p className="text-gray-500">
             {dragActive ? "Drop the file here..." : "Drag & drop a file here or click to browse"} </p>
         </div>
-     </TooltipComponent>
+     </TooltipWrapper>
 <Input 
  type="file"
 ref={inputRef}
@@ -210,11 +217,8 @@ className="border border-gray-300 rounded-md p-2 w-full hidden"/>
              </>)
               : <p>No file selected</p>}
           </div>
- 
             <CardAction className="flex self-center items-center justify-center mt-4 space-y-2">
-
- 
-       <TooltipComponent text="upload Selected file">
+       <TooltipWrapper text="upload Selected file">
 {showUploadButton && (<Button
 disabled={!files || files.length === 0}
       aria-label="Upload file"
@@ -224,27 +228,12 @@ disabled={!files || files.length === 0}
    }}
   className="mt-4 cursor-pointer bg-blue-500 text-white hover:bg-blue-600"
 >
-  Upload File
+  {isLoading?<> <Loader2/> <span>loading</span></>  :"Upload File"}
 </Button>)}
-</TooltipComponent>
-            </CardAction>
-          
+</TooltipWrapper>
+            </CardAction>     
     </CardContent>
 </Card>
   )
 }
-type TooltipComponentProps = {
-  text: string;
-  children: ReactNode;
-};
-const TooltipComponent= ({ text, children }:TooltipComponentProps)=>{
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent>
-        <p>{text}</p>
-      </TooltipContent>
-    </Tooltip>
-  )
-}
-export default FileUpload
+
