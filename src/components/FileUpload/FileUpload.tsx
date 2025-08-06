@@ -157,7 +157,8 @@ const acceptedFileTypes = ["image/jpeg",
     }
   }
   return (
-<Card className={cn(fileUploadVariants({variant, size}), className)}>
+<Card className={cn(fileUploadVariants({ variant: variant, size: size }), className)}>
+  
     <CardHeader>
        {label && (
   <div className="text-lg font-semibold mb-4 text-center">
@@ -191,6 +192,9 @@ const acceptedFileTypes = ["image/jpeg",
             {dragActive ? "Drop the file here..." : "Drag & drop a file here or click to browse"} </p>
         </div>
      </TooltipWrapper>
+<label className="sr-only">
+  Select file
+</label>
 <Input 
  type="file"
 ref={inputRef}

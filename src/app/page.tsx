@@ -20,7 +20,7 @@ export default function Home() {
     };
   return (
   <div className="flex flex-col items-center justify-center min-h-screen p-4">
-  <FileUpload onError={errorHandler} variant="default" progress={true} onSuccess={successHandler} url='api/upload'>
+  <FileUpload onError={errorHandler} variant="success" progress={true} onSuccess={successHandler} url='api/upload'>
   <p className="text-xs text-muted-foreground">
     Allowed file types: PNG, JPG, PDF, DOCX.
   </p>
