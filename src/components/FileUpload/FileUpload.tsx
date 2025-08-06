@@ -2,7 +2,7 @@
 import React from 'react'
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Input } from '../ui/input'
-import { Button } from '../ui/button'
+import { Button, buttonVariants } from '../ui/button'
 import { cn } from '@/lib/utils'
 import { useState, useRef, ReactNode } from 'react'
 import { DroneIcon, Loader2, UploadCloudIcon } from 'lucide-react'
@@ -18,6 +18,7 @@ import useDragAndDrop from '@/app/hooks/useDragAndDrop'
 import { on } from 'events'
 import { dropzoneVariants, fileUploadVariants, FileUploadVariants } from '../ui/file-upload'
 import { TooltipWrapper } from '../ui/tooltip-wrapper'
+import { b } from 'vitest/dist/chunks/suite.d.FvehnV49'
 
 interface FileUploadProps extends FileUploadVariants {
   /** Optional children to render inside the component */
@@ -53,9 +54,11 @@ interface FileUploadProps extends FileUploadVariants {
   size?: "sm" | "md" | "lg";
   /** Variant of the file upload component */
   variant?: "default" | "ghost" | "muted" | "dark" | "success" | "danger";
+  buttonVariant?: "default" | "outline" | "destructive" | "secondary" | "ghost" | "link";
+  buttonSize?: "sm" | "lg" | "icon" | "default";
 }
 
-export function FileUpload({progress=true,className, size, variant, onUpload,onSuccess,onError, tooltip, label, url, showUploadButton=true, children}:FileUploadProps)  {
+export function FileUpload({progress=true,className, size, variant, onUpload,onSuccess,onError, tooltip, label, url, showUploadButton=true, children, buttonVariant, buttonSize}:FileUploadProps)  {
     
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploadProgressMap, setUploadProgressMap] = useState<{}>({})
@@ -166,7 +169,7 @@ const acceptedFileTypes = ["image/jpeg",
   </div>
 )}
     </CardHeader>
-    <CardContent className='flex flex-col items-center m-5 space-y-4 hover:bg-gray-100 border border-gray-200 border-dashed rounded-md p-6'>
+    <CardContent className='flex flex-col items-center m-5 space-y-4  border border-gray-200 border-dashed rounded-md p-6'>
        <TooltipWrapper
         text="Drag & drop your file here or click to select" >
         <div
@@ -207,7 +210,7 @@ className="border border-gray-300 rounded-md p-2 w-full hidden"/>
       {children}
     </div>
   )}
-        <div className="text-gray-500">
+        <div className="">
             {files && files.length > 0
               ?(<>
             { files?.map((file,i)=>(<div key={i}>
@@ -226,11 +229,12 @@ className="border border-gray-300 rounded-md p-2 w-full hidden"/>
 {showUploadButton && (<Button
 disabled={!files || files.length === 0}
       aria-label="Upload file"
-  
+  variant={buttonVariant || "default"}
+  size={buttonSize || "default"}
   onClick={async () => {
     handleUpload()
    }}
-  className="mt-4 cursor-pointer bg-blue-500 text-white hover:bg-blue-600"
+  className=""
 >
   {isLoading?<> <Loader2/> <span>loading</span></>  :"Upload File"}
 </Button>)}

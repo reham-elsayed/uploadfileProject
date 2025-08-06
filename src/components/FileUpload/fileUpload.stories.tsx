@@ -44,3 +44,17 @@ export const Default: Story = {
     onError: errorHandler,
   },
 };
+
+export const Success: Story = {
+  args: {
+    url: "/api/upload",
+    label: "Upload a file",
+    tooltip: "Only image/pdf/docx allowed",
+    showUploadButton: true,
+    progress: false,
+    children: null,
+    className: "",
+    size: "md",
+    variant: "dark"
+  }
+};
