@@ -5,7 +5,7 @@ import { Input } from '../ui/input'
 import { Button, buttonVariants } from '../ui/button'
 import { cn } from '@/lib/utils'
 import { useState, useRef, ReactNode } from 'react'
-import { DroneIcon, Loader2, UploadCloudIcon } from 'lucide-react'
+import { Loader2, UploadCloudIcon } from 'lucide-react'
 import axios from 'axios'
 import {
   Tooltip,
@@ -19,6 +19,7 @@ import { on } from 'events'
 import { dropzoneVariants, fileUploadVariants, FileUploadVariants } from '../ui/file-upload'
 import { TooltipWrapper } from '../ui/tooltip-wrapper'
 import { b } from 'vitest/dist/chunks/suite.d.FvehnV49'
+import type { VariantProps } from "class-variance-authority";
 
 interface FileUploadProps extends FileUploadVariants {
   /** Optional children to render inside the component */
@@ -30,7 +31,7 @@ interface FileUploadProps extends FileUploadVariants {
   /** MIME types or file extensions to accept */
   accept?: string;
   /** Called when files are selected (before upload) */
-  onSelectFile?: (files: File[]) => void;
+  onSelectFile?: (files: File[]) => File[] | void;
   /** Override default upload logic */
   onUpload?: (
     file: File[],
@@ -54,11 +55,11 @@ interface FileUploadProps extends FileUploadVariants {
   size?: "sm" | "md" | "lg";
   /** Variant of the file upload component */
   variant?: "default" | "ghost" | "muted" | "dark" | "success" | "danger";
-  buttonVariant?: "default" | "outline" | "destructive" | "secondary" | "ghost" | "link";
+  buttonVariant?:  VariantProps<typeof buttonVariants>["variant"];
   buttonSize?: "sm" | "lg" | "icon" | "default";
 }
 
-export function FileUpload({progress=true,className, size, variant, onUpload,onSuccess,onError, tooltip, label, url, showUploadButton=true, children, buttonVariant, buttonSize}:FileUploadProps)  {
+export function FileUpload({progress=true,className, size, variant, onUpload,onSuccess,onError, tooltip, label, url, showUploadButton=true, children, buttonVariant, buttonSize, onSelectFile}:FileUploadProps)  {
     
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploadProgressMap, setUploadProgressMap] = useState<{}>({})
@@ -68,20 +69,7 @@ const acceptedFileTypes = ["image/jpeg",
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ]// for .docx
  
-
-
-  const onSelectFile = (selectedFiles: File[]) => {
-  console.log("Files selected:", selectedFiles)
-  if (onUpload) {
-    onUpload(selectedFiles, (percent: number) => {
-      setUploadProgressMap(prev => ({
-        ...prev,
-        [selectedFiles[0].name]: percent,
-      }));
-    });
-  }}
- 
-  const {files, dragActive, handleDrag, handleDrop , clear, handleFileChange} = useDragAndDrop({onSelectFile: onSelectFile})
+  const {files, dragActive, handleDrag, handleDrop , clear, handleFileChange} = useDragAndDrop({onSelectFile:onSelectFile})
 
   const genericUpload = async (file: File) => {
   try{
